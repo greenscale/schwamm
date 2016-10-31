@@ -1,0 +1,38 @@
+{
+	"name": "schwamm",
+	"version": "0.0.1",
+	"dependencies": [
+		"../plankton/path/project.json",
+		"../plankton/file/project.json",
+		"../plankton/args/project.json"
+	],
+	"roottask": {
+		"name": "link",
+		"type": "concat",
+		"sub": [
+			{
+				"name": "compile",
+				"type": "concat",
+				"parameters": {
+					"inputs": [
+						"source/schwamm.js"
+					],
+					"output": "temp/pure.js"
+				}
+			}
+		],
+		"parameters": {
+			"inputs": [
+				"../plankton/base/build/logic.js",
+				"../plankton/call/build/logic.js",
+				"../plankton/object/build/logic.js",
+				"../plankton/path/build/logic.js",
+				"../plankton/file/build/logic.js",
+				"../plankton/args/build/logic.js",
+				"temp/pure.js"
+			],
+			"output": "build/schwamm.js"
+		}
+	}
+}
+
