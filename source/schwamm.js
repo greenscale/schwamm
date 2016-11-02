@@ -2,6 +2,131 @@
 
 "use strict";
 
+function decompose(entry) {
+	let regexp = new RegExp("(\\w+):(\\S+)");
+	let matching = regexp.exec(entry);
+	if (matching == null) {
+		return null;
+	}
+	else {
+		return {"groupname": matching[1], "path": matching[2]};
+	}
+}
+
+function absolutify(path) {
+	let cwd = lib_path.class_location.current();
+	let filepointer = lib_path.filepointer_read(path);
+	let filepointer_ = new lib_path.class_filepointer(
+		cwd.extend(filepointer.location.chain),
+		filepointer.filename
+	);
+	let path_ = filepointer_.toString();
+	return path_;
+}
+
+function convert(structure) {
+	let structure_ = {};
+	structure.forEach(
+		entry => {
+			let pair = decompose(entry);
+			let path = absolutify(pair.path);
+			if (! (pair.groupname in structure_)) {
+				structure_[pair.groupname] = [];
+			}
+			structure_[pair.groupname].push(path);
+		}
+	);
+	return structure_;
+}
+
+function create(includes, adhocs) {
+	return (
+		(resolve, reject) => {
+			let merge = (groups, input) => {
+				Object.keys(input).forEach(
+					groupname => {
+						if (! (groupname in groups)) {
+							groups[groupname] = [];
+						}
+						let group = groups[groupname];
+						input[groupname].forEach(
+							member => {
+								if (group.indexOf(member) < 0) {
+									group.push(member);
+								}
+							}
+						);
+					}
+				);
+			};
+			lib_call.executor_chain(
+				{},
+				(
+					[]
+					.concat(
+						includes.map(
+							include => groups => (resolve_, reject_) => {
+								lib_file.read_json(include)(
+									data => {
+										merge(groups, data);
+										resolve_(groups);
+									},
+									reject_
+								);
+							}
+						)
+					)
+					.concat(
+						[
+							groups => (resolve_, reject_) => {
+								merge(groups, adhocs);
+								resolve_(groups);
+							}
+						]
+					)
+				)
+			)(
+				groups => {
+					console.info(JSON.stringify(groups, undefined, "\t"));
+					resolve(undefined);
+				},
+				reject
+			);
+		}
+	);
+}
+
+function apply_(file, outputs) {
+	return (
+		(resolve, reject) => {
+			if (file == null) {
+				reject(new Error("you must specify a source file via '--file=...'"));
+			}
+			else {
+				lib_file.read_json(file)(
+					data => {
+						lib_object.to_array(outputs).forEach(
+							pair => {
+								let list = data[pair.key];
+								let command = `cat ${list.join(" ")} > ${pair.value}`;
+								try {
+									let _child_process = require("child_process");
+									_child_process.execSync(command);
+									resolve(undefined);
+								}
+								catch (exception) {
+									reject(exception);
+								}
+							}
+						);
+					},
+					reject
+				);
+			}
+		}
+	);
+}
+
 function main(args) {
 	let arghandler = new lib_args.class_handler(
 		[
@@ -81,134 +206,18 @@ function main(args) {
 		]
 	);
 	let argdata = arghandler.read("cli", args.join(" "));
-	let decompose = (entry) => {
-		let regexp = new RegExp("(\\w+):(\\S+)");
-		let matching = regexp.exec(entry);
-		if (matching == null) {
-			return null;
-		}
-		else {
-			return {"groupname": matching[1], "path": matching[2]};
-		}
-	};
-	let absolutify = (path) => {
-		let cwd = lib_path.class_location.current();
-		let filepointer = lib_path.filepointer_read(path);
-		let filepointer_ = new lib_path.class_filepointer(
-			cwd.extend(filepointer.location.chain),
-			filepointer.filename
-		);
-		let path_ = filepointer_.toString();
-		console.error(`${path} -> ${path_}`);
-		return path_;
-	};
-	let convert = (structure) => {
-		let structure_ = {};
-		structure.forEach(
-			entry => {
-				let pair = decompose(entry);
-				let path = absolutify(pair.path);
-				if (! (pair.groupname in structure_)) {
-					structure_[pair.groupname] = [];
-				}
-				structure_[pair.groupname].push(path);
-			}
-		);
-		return structure_;
-	};
 	switch (argdata.command) {
 		case "create": {
-			let add = (groups, groupname, members) => {
-				if (! (groupname in groups)) {
-					groups[groupname] = [];
-				}
-				let group = groups[groupname];
-				members.forEach(
-					member => {
-						if (group.indexOf(member) < 0) {
-							group.push(member);
-						}
-					}
-				);
-			};
-			let merge = (groups, input) => {
-				Object.keys(input).forEach(groupname => add(groups, groupname, input[groupname]));
-			};
-			let includes = argdata["includes"].map(entry => lib_path.filepointer_read(entry));
-			let adhocs = convert(argdata["adhocs"]);
-			return (
-				(resolve, reject) => {
-					lib_call.executor_chain(
-						{},
-						(
-							[]
-							.concat(
-								includes.map(
-									include => groups => (resolve_, reject_) => {
-										lib_file.read_json(include.toString())(
-											data => {
-												let data_ = lib_object.map(
-													data,
-													group => group.map(
-														member => lib_path.filepointer_read(member).toString()
-													)
-												);
-												merge(groups, data_);
-												resolve_(groups);
-											},
-											reject_
-										);
-									}
-								)
-							)
-							.concat(
-								[
-									groups => (resolve_, reject_) => {
-										merge(groups, adhocs);
-										resolve_(groups);
-									}
-								]
-							)
-						)
-					)(
-						groups => {
-							console.info(JSON.stringify(groups, undefined, "\t"));
-							resolve(undefined);
-						},
-						reject
-					);
-				}
+			return create(
+				argdata["includes"],
+				convert(argdata["adhocs"])
 			);
 			break;
 		}
 		case "apply": {
-			let outputs = convert(argdata["outputs"]);
-			let file_ = lib_path.filepointer_read(argdata["file"]);
-			return (
-				(resolve, reject) => {
-					lib_file.read_json(argdata["file"].toString())(
-						data => {
-							lib_object.to_array(outputs).forEach(
-								pair => {
-									let list = data[pair.key]
-										// .map(lib_path.filepointer_read)
-										// .map(x => x.toString())
-									;
-									let command = `cat ${list.join(" ")} > ${pair.value}`;
-									try {
-										let _child_process = require("child_process");
-										_child_process.execSync(command);
-										resolve(undefined);
-									}
-									catch (exception) {
-										reject(exception);
-									}
-								}
-							);
-						},
-						reject
-					);
-				}
+			return apply_(
+				argdata["file"],
+				convert(argdata["outputs"])
 			);
 			break;
 		}
