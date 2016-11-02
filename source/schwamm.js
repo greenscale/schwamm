@@ -2,9 +2,6 @@
 
 "use strict";
 
-var _fs = require("fs");
-var _child_process = require("child_process");
-
 function main(args) {
 	/**
 	 * @todo check if target exists
@@ -116,7 +113,6 @@ function main(args) {
 		]
 	);
 	let argdata = arghandler.read("cli", args.join(" "));
-// console.error(argdata);
 	switch (argdata.command) {
 		case "create": {
 			let add = (groups, groupname, members) => {
@@ -138,116 +134,101 @@ function main(args) {
 			let includes = argdata["includes"].map(entry => lib_path.filepointer_read(entry));
 			let adhocs = convert(argdata["dir"], argdata["adhocs"]);
 			let groups = {};
-			includes.forEach(
-				include => {
-					lib_file.read_json(include.toString())(
-						data => {
-							let data_ = lib_object.map(
-								data,
-								group => {
-									return group.map(
-										member => {
-											let filepointer = lib_path.filepointer_read(member);
-											let filepointer_ = new lib_path.class_filepointer(
-												new lib_path.class_location(
-													null,
-													lib_path.location_read(argdata["dir"]).chain.invert()
-														.extend(include.location.chain)
-														.extend(filepointer.location.chain)
-												),
-												filepointer.filename
-											);
-											return filepointer_.toString();
-										}
-									)
-								}
-							);
-							merge(groups, data_);
+			return (
+				(resolve, reject) => {
+					lib_call.executor_chain(
+						undefined,
+						includes.map(
+							include => _ => (resolve_, reject_) => {
+								lib_file.read_json(include.toString())(
+									data => {
+										let data_ = lib_object.map(
+											data,
+											group => group.map(
+												member => {
+													let filepointer = lib_path.filepointer_read(member);
+													let filepointer_ = new lib_path.class_filepointer(
+														new lib_path.class_location(
+															null,
+															lib_path.location_read(argdata["dir"]).chain.invert()
+																.extend(include.location.chain)
+																.extend(filepointer.location.chain)
+														),
+														filepointer.filename
+													);
+													return filepointer_.toString();
+												}
+											)
+										);
+										merge(groups, data_);
+										resolve_(undefined);
+									},
+									reject_
+								);
+							}
+						)
+					)(
+						_ => {
+							merge(groups, adhocs);
+							console.info(JSON.stringify(groups, undefined, "\t"));
+							resolve(undefined);
 						},
-						error => {
-							console.warn(error);
-						}
+						reject
 					);
 				}
 			);
-			merge(groups, adhocs);
-			console.info(JSON.stringify(groups, undefined, "\t"));
-			return {"successfull": true};
-			// break;
+			break;
 		}
 		case "apply": {
 			let outputs = convert(argdata["dir"], argdata["outputs"]);
 			let file_ = lib_path.filepointer_read(argdata["file"]);
-			lib_file.read_json(argdata["file"].toString())(
-				data => {
-					lib_object.to_array(outputs).forEach(
-						pair => {
-							let list = data[pair.key].map(
-								entry => {
-									return file_.foo(lib_path.filepointer_read(entry)).toString();
+			return (
+				(resolve, reject) => {
+					lib_file.read_json(argdata["file"].toString())(
+						data => {
+							lib_object.to_array(outputs).forEach(
+								pair => {
+									let list = data[pair.key].map(
+										entry => {
+											return file_.foo(lib_path.filepointer_read(entry)).toString();
+										}
+									);
+									let command = `cat ${list.join(" ")} > ${pair.value}`;
+									try {
+										let _child_process = require("child_process");
+										_child_process.execSync(command);
+										resolve(undefined);
+									}
+									catch (exception) {
+										reject(exception);
+									}
 								}
 							);
-							let command = `cat ${list.join(" ")} > ${pair.value}`;
-console.error(command);
-							try {
-								_child_process.execSync(command);
-							}
-							catch (exception) {
-								console.error(exception);
-							}
-						}
+						},
+						reject
 					);
-				},
-				error => {
-					console.warn(error);
 				}
 			);
-			return {"successfull": true};
-			// break;
+			break;
 		}
 		default: {
-			return {"successfull": false, "message": `unhandled command "${argdata.command}"`};
-			// break;
+			return (
+				(resolve, reject) => {
+					reject(new Error(`unhandled command "${argdata.command}"`));
+				}
+			);
+			break;
 		}
 	}
 }
 
-try {
-	let result = main(process.argv.slice(2));
-	if (result.successfull) {
+main(process.argv.slice(2))(
+	_ => {
 		process.exit(0);
-	}
-	else {
-		console.error(result.message);
+	},
+	error => {
+		console.error(error);
 		process.exit(-1);
 	}
-}
-catch (exception) {
-	console.error(exception);
-	process.exit(-1);
-}
-
-
-
-/*
-function main(args) {
-	let filepointer_project = lib_path.filepointer_read("./project.json");
-	let filepointer_schwamm = lib_path.filepointer_read("./test/schwamm.json");
-	let filepointer_adhoc = lib_path.filepointer_read("./build/logic.js");
-	
-	let filepointer_foo = new lib_path.class_filepointer(
-		filepointer_project.location
-			.extend(filepointer_schwamm.location.chain.invert())
-			.extend(filepointer_adhoc.location.chain)
-		,
-		filepointer_adhoc.filename
-	).normalize();
-	console.info(filepointer_project.toString());
-	console.info(filepointer_schwamm.toString());
-	console.info(filepointer_adhoc.toString());
-	console.info(filepointer_foo.toString());
-}
-
-main(process.argv.slice(2));
- */
+);
 
