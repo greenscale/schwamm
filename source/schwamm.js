@@ -112,13 +112,13 @@ function apply_(file, outputs) {
 								try {
 									let _child_process = require("child_process");
 									_child_process.execSync(command);
-									resolve(undefined);
 								}
 								catch (exception) {
 									reject(exception);
 								}
 							}
 						);
+						resolve(undefined);
 					},
 					reject
 				);
