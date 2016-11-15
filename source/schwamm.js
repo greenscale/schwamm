@@ -108,7 +108,7 @@ function apply_(file, outputs) {
 						lib_object.to_array(outputs).forEach(
 							pair => {
 								let list = data[pair.key];
-								let command = `cat ${list.join(" ")} > ${pair.value}`;
+								let command = (((list == undefined) || (list.length == 0)) ? `touch ${pair.value}` : `cat ${list.join(" ")} > ${pair.value}`);
 								try {
 									let _child_process = require("child_process");
 									_child_process.execSync(command);
