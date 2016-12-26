@@ -3,7 +3,7 @@
 "use strict";
 
 function decompose(entry) {
-	let regexp = new RegExp("(\\w+):(\\S+)");
+	let regexp = new RegExp("([^:]+):(\\S+)");
 	let matching = regexp.exec(entry);
 	if (matching == null) {
 		return null;
