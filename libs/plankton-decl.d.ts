@@ -9,9 +9,62 @@ declare module lib_base {
      */
     function environment(): string;
 }
-declare function hash(value: any): string;
-declare function equals(value_x: any, value_y: any): boolean;
-declare function show(value: any): string;
+/**
+ * @author fenris
+ */
+declare var instance_verbosity: int;
+/**
+ * @author fenris
+ */
+interface interface_collatable<type_value> {
+    /**
+     * @author fenris
+     */
+    _collate(value: type_value): boolean;
+}
+/**
+ * @author fenris
+ */
+declare function instance_collate<type_value>(value1: type_value, value2: type_value): boolean;
+/**
+ * @author fenris
+ */
+interface interface_cloneable<type_value> {
+    /**
+     * @author fenris
+     */
+    _clone(): type_value;
+}
+/**
+ * @author fenris
+ */
+declare function instance_clone<type_value>(value: type_value): type_value;
+/**
+ * @author fenris
+ */
+interface interface_hashable {
+    /**
+     * @author fenris
+     */
+    _hash(): string;
+}
+/**
+ * @author fenris
+ */
+declare function instance_hash<type_value>(value: type_value): string;
+/**
+ * @author fenris
+ */
+interface interface_showable {
+    /**
+     * @author fenris
+     */
+    _show(): string;
+}
+/**
+ * @author fenris
+ */
+declare function instance_show<type_value>(value: type_value): string;
 /**
  * @author frac
  */
@@ -189,126 +242,7 @@ declare class class_error extends Error {
      */
     toString(): string;
 }
-declare var Exception: any;
-declare var ExceptionAbstract: any;
-declare var exception_is: any;
-/**
- * @author frac
- */
-declare class Pair<First, Second> {
-    first: First;
-    second: Second;
-    constructor(first: First, second: Second);
-    equals(pair: Pair<First, Second>): boolean;
-    hash(): string;
-    toString(): string;
-}
-/**
- * @author frac
- */
-declare class AbstractMap<Key, Value> {
-    size: int;
-    constructor();
-    get(key: Key): Value;
-    get_fallback(key: Key, fallback?: Value): Value;
-    has(key: Key): boolean;
-    set(key: Key, value: Value): AbstractMap<Key, Value>;
-    extend(map: AbstractMap<Key, Value>): void;
-    delete(key: Key): boolean;
-    clear(): void;
-    forEach(action: (value: Value, key: Key, self: AbstractMap<Key, Value>) => void): void;
-    pairs(): Array<Pair<Key, Value>>;
-    toString(): string;
-}
-/**
- * @author frac
- */
-declare class EqualityMap<Key, Value> extends AbstractMap<Key, Value> {
-    private pairs_;
-    constructor();
-    private get_index(key);
-    private get_pair(key);
-    get(key: Key): Value;
-    has(key: Key): boolean;
-    set(key: Key, value: Value): EqualityMap<Key, Value>;
-    delete(key: Key): boolean;
-    clear(): void;
-    forEach(action: (value: Value, key: Key, self: EqualityMap<Key, Value>) => void): void;
-}
-/**
- * @author frac
- */
-declare class HashMap<Key, Value> extends AbstractMap<Key, Value> {
-    private keys_original;
-    private object;
-    constructor();
-    get(key: Key): Value;
-    has(key: Key): boolean;
-    set(key: Key, value: Value): HashMap<Key, Value>;
-    delete(key: Key): boolean;
-    clear(): void;
-    forEach(action: (value: Value, key: Key, self: HashMap<Key, Value>) => void): void;
-}
-/**
- * @author frac
- */
-declare class SimpleMap<Value> extends HashMap<string, Value> {
-    constructor();
-}
-/**
- * @author frac
- */
-declare class Tree<Value> {
-    private parent;
-    private value;
-    private children;
-    constructor(parent?: Tree<Value>, value?: Value, children?: Array<Tree<Value>>);
-    value_get(): Value;
-    map<Value_>(transformator: (value: Value) => Value_, parent?: Tree<Value_>): Tree<Value_>;
-    flatten(postorder?: boolean): Array<Tree<Value>>;
-    traverse(postorder?: boolean): Array<Value>;
-    graph(prefix?: string): Graph<Value>;
-    value_set(value: Value): void;
-    children_add(tree: Tree<Value>): void;
-}
-/**
- * @author frac
- */
-declare class Graph<Value> {
-    private vertices;
-    private edges;
-    constructor(vertices: Array<Pair<string, Value>>, edges: Array<Pair<Pair<string, string>, any>>);
-    get_vertices(): Array<Pair<string, any>>;
-    get_edges(): Array<Pair<Pair<string, string>, any>>;
-    graphviz(name?: string): string;
-}
-declare function tree_test(): Tree<int>;
-/**
- * @author frac
- */
-declare class class_set<type_element> {
-    /**
-     * @author frac
-     */
-    protected elements: Array<type_element>;
-    /**
-     * @author frac
-     */
-    constructor(elements?: Array<type_element>);
-    /**
-     * @author frac
-     */
-    elements_get(): Array<type_element>;
-    /**
-     * @author frac
-     */
-    add(element: type_element): void;
-    /**
-     * @author frac
-     */
-    forEach(action: (element: type_element, index?: int) => void): void;
-}
-/// <reference path="../../base/build/logic.d.ts" />
+/// <reference path="../../base/build/logic-decl.d.ts" />
 declare module lib_call {
     /**
      * @desc this is kind of an ugly hack; the motivation is, that the JS-interpreter of many Gecko-based browsers
@@ -581,9 +515,9 @@ declare module lib_call {
     /**
      * @author fenris
      */
-    function knot_chain<type_input, type_output, type_error>(knots: Array<type_knot<any, any, type_error>>): type_knot<type_input, type_output, type_error>;
+    function knot_chain<type_error>(knots: Array<type_knot<any, any, type_error>>): type_knot<any, any, type_error>;
     /**
-     * @author frac
+     * @author fenris
      */
     /**
      * @author fenris
@@ -594,12 +528,100 @@ declare module lib_call {
         [id: string]: any;
     }, type_error>;
     /**
-     * @author frac
+     * @author fenris
      */
     function knot_condense<type_input, type_output, type_error>(knots: Array<type_knot<type_input, type_output, type_error>>): type_knot<type_input, Array<type_output>, type_error>;
+    /**
+     * @author fenris
+     */
+    function knot_first<type_input, type_output, type_error>(knots: Array<type_knot<type_input, type_output, type_error>>): type_knot<type_input, type_output, Array<type_error>>;
+    /**
+     * @author fenris
+     */
+    function knot_repeat<type_input, type_output, type_error>(knot: type_knot<type_input, type_output, type_error>, attempts?: int, delay?: (attempt: int) => int): type_knot<type_input, type_output, Array<type_error>>;
+    /**
+     * @author fenris
+     */
+    class class_knot_initializer<type_input, type_output, type_error> {
+        /**
+         * @desc the actual action to be performed
+         * @author fenris
+         */
+        protected fetcher: type_knot<type_input, type_output, type_error>;
+        /**
+         * @author fenris
+         * 0 : initial
+         * 1 : waiting
+         * 2 : done, successful
+         * 3 : done, failed
+         */
+        protected state: int;
+        /**
+         * @author fenris
+         */
+        protected queue: Array<{
+            resolve: (output?: type_output) => void;
+            reject: (error?: type_error) => void;
+        }>;
+        /**
+         * @author fenris
+         */
+        protected output: type_output;
+        /**
+         * @author fenris
+         */
+        protected error: type_error;
+        /**
+         * @author fenris
+         */
+        constructor(fetcher: type_knot<type_input, type_output, type_error>);
+        /**
+         * @author fenris
+         */
+        protected actuate(): void;
+        /**
+         * @author fenris
+         */
+        get(input: type_input): type_knot<void, type_output, type_error>;
+    }
 }
-/// <reference path="../../base/build/logic.d.ts" />
-/// <reference path="../../call/build/logic.d.ts" />
+/**
+ * @author fenris
+ */
+declare class Promise<type_result, type_reason> {
+    /**
+     * @author fenris
+     */
+    constructor(executor: lib_call.type_executor<type_result, type_reason>);
+    /**
+     * @author fenris
+     */
+    then<type_result_, type_reason_>(onFulfilled: (result: type_result) => any, onRejected?: (reason: type_reason) => any): Promise<type_result_, type_reason_>;
+    /**
+     * @author fenris
+     */
+    catch<type_result_, type_reason_>(onRejected: (reason: type_reason) => any): Promise<type_result_, type_reason_>;
+    /**
+     * @author fenris
+     */
+    static resolve<type_result, type_reason>(result: type_result): Promise<type_result, type_reason>;
+    /**
+     * @author fenris
+     */
+    static reject<type_result, type_reason>(reason: type_reason): Promise<type_result, type_reason>;
+}
+declare module lib_call {
+    /**
+     * @author fenris
+     */
+    type type_microprogram<type_input, type_output, type_error> = (input: type_input) => Promise<type_output, type_error>;
+    /**
+     * @author fenris
+     */
+    function promise_chain<type_value, type_error>(microprograms: Array<type_microprogram<type_value, type_value, type_error>>): type_microprogram<type_value, type_value, type_error>;
+}
+/// <reference path="../../base/build/logic-decl.d.ts" />
+/// <reference path="../../call/build/logic-decl.d.ts" />
 declare var plain_text_to_html: (text: string) => string;
 /**
  * @desc makes a valid
@@ -726,8 +748,8 @@ declare function locale_date(date?: Date, ignore_error?: boolean): string;
 declare var eml_log: any;
 declare var track_exports: any;
 declare var make_logger: (prefix: any, current_loglevel: any) => (obj: any, lvl: any) => void;
-/// <reference path="../../base/build/logic.d.ts" />
-/// <reference path="../../string/build/logic.d.ts" />
+/// <reference path="../../base/build/logic-decl.d.ts" />
+/// <reference path="../../string/build/logic-decl.d.ts" />
 declare module lib_object {
     /**
      * @author fenris
@@ -740,6 +762,14 @@ declare module lib_object {
         [key: string]: type_from;
     }, transformator: (value_from: type_from, key?: string) => type_to): {
         [key: string]: type_to;
+    };
+    /**
+     * @author fenris
+     */
+    function filter<type_value>(object_from: {
+        [key: string]: type_value;
+    }, predicate: (value_from: type_value, key?: string) => boolean): {
+        [key: string]: type_value;
     };
     /**
      * @author fenris
@@ -777,6 +807,14 @@ declare module lib_object {
      * @author fenris
      */
     function matches(object: Object, pattern: Object): boolean;
+    /**
+     * @author fenris
+     */
+    function flatten(value: any): Object;
+    /**
+     * @author frac
+     */
+    function clash(x: Object, y: Object): Object;
 }
 /**
  * @desc adapters for old syntax
@@ -787,6 +825,7 @@ declare var object_map: typeof lib_object.map;
 declare var object_a2o: typeof lib_object.from_array;
 declare var object_o2a: typeof lib_object.to_array;
 declare var object_matches: typeof lib_object.matches;
+declare var object_clash: typeof lib_object.clash;
 declare var Mapper: any;
 /**
  * @param {Object} map
@@ -857,10 +896,6 @@ declare var getLeafs: (object: any) => any;
  * @param {function} match
  */
 declare var merge_array: (core: any, mantle: any, match?: (x: any, y: any) => boolean) => any;
-/**
- * @author frac
- */
-declare function object_clash(x: Object, y: Object): Object;
 /**
  * @desc merges two objects recursivly
  * @param {Object} object1 core
@@ -1028,7 +1063,7 @@ declare module lib_object {
         static test(): void;
     }
 }
-/// <reference path="../../object/build/logic.d.ts" />
+/// <reference path="../../object/build/logic-decl.d.ts" />
 declare module lib_path {
     /**
      * @author fenris
@@ -1242,8 +1277,8 @@ declare module lib_path {
      */
     function filepointer_read(str: string, system?: string): class_filepointer;
 }
-/// <reference path="../../base/build/logic.d.ts" />
-/// <reference path="../../call/build/logic.d.ts" />
+/// <reference path="../../base/build/logic-decl.d.ts" />
+/// <reference path="../../call/build/logic-decl.d.ts" />
 declare module lib_file {
     /**
      * @author fenris
@@ -1275,7 +1310,7 @@ declare module lib_file {
      */
     function write_json(path: string, data: Object): lib_call.type_executor<void, Error>;
 }
-/// <reference path="../../base/build/logic.d.ts" />
+/// <reference path="../../base/build/logic-decl.d.ts" />
 declare module lib_args {
     /**
      * @author fenris
