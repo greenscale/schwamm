@@ -515,7 +515,7 @@ declare module lib_call {
     /**
      * @author fenris
      */
-    function knot_chain<type_error>(knots: Array<type_knot<any, any, type_error>>): type_knot<any, any, type_error>;
+    function knot_chain<type_error>(knots: Array<type_knot<any, any, type_error>>, log?: boolean): type_knot<any, any, type_error>;
     /**
      * @author fenris
      */
@@ -609,6 +609,10 @@ declare class Promise<type_result, type_reason> {
      * @author fenris
      */
     static reject<type_result, type_reason>(reason: type_reason): Promise<type_result, type_reason>;
+    /**
+     * @author fenris
+     */
+    static all(promises: Array<Promise<any, any>>): Promise<Array<any>, any>;
 }
 declare module lib_call {
     /**
@@ -621,661 +625,491 @@ declare module lib_call {
     function promise_chain<type_value, type_error>(microprograms: Array<type_microprogram<type_value, type_value, type_error>>): type_microprogram<type_value, type_value, type_error>;
 }
 /// <reference path="../../base/build/logic-decl.d.ts" />
-/// <reference path="../../call/build/logic-decl.d.ts" />
-declare var plain_text_to_html: (text: string) => string;
-/**
- * @desc makes a valid
- */
-declare var format_sentence: (str: string, rtl?: boolean, caseSense?: boolean) => string;
-declare var fill_string_template: (template_string: string, object: any, fabric?: Function, delimiter?: string, default_string?: string) => string;
-declare var make_string_template: (_template: string, _fabrics?: Object) => (object: {
-    [key: string]: string;
-}) => string;
-declare var make_eml_header: (object: {
-    [key: string]: string;
-}) => string;
-declare var make_eml_body: Object;
-declare module lib_string {
+declare module lib_structures {
     /**
-     * @author neuc,frac
+     * @author fenris
      */
-    function empty(str: string): boolean;
-    /**
-     * @desc returns a unique string
-     * @param {string} prefix an optional prefix for the generated string
-     * @return {string}
-     * @author frac
-     */
-    function generate(prefix?: string): string;
-    /**
-     * @desc splits a string, but returns an empty list, if the string is empty
-     * @param {string} chain
-     * @param {string} separator
-     * @return {Array<string>}
-     * @author frac
-     */
-    function split(chain: string, separator?: string): Array<string>;
-    /**
-     * @desc concats a given word with itself n times
-     * @param {string} word
-     * @param {int}
-     * @return {string}
-     * @author frac
-     */
-    function repeat(word: string, count: int): string;
-    /**
-     * @desc lengthens a string by repeatedly appending or prepending another string
-     * @param {string} word the string to pad
-     * @param {int} length the length, which the result shall have
-     * @param {string} symbol the string, which will be added (multiple times)
-     * @param {boolean} [prepend]; whether to prepend (~true) or append (~false); default: false
-     * @return {string} the padded string
-     * @author frac
-     */
-    function pad(word: string, length: int, symbol: string, prepend?: boolean): string;
-    /**
-     * @desc checks if a given string conttains a certain substring
-     * @param {string} string
-     * @param {string} part
-     * @return {boolean}
-     * @author frac
-     */
-    function contains(chain: string, part: string): boolean;
-    /**
-     * @desc checks if a given string starts with a certain substring
-     * @param {string} string
-     * @param {string} part
-     * @return {boolean}
-     * @author frac
-     */
-    function startsWith(chain: string, part: string): boolean;
-    /**
-     * @desc checks if a given string ends with a certain substring
-     * @param {string} string
-     * @param {string} part
-     * @return {boolean}
-     * @author frac
-     */
-    function endsWith(chain: string, part: string): boolean;
-    /**
-     * @desc count the occourrences of a string in a string
-     * @param string haystack_string the string wich should be examined
-     * @param string needle_string the string which should be counted
-     * @author neuc
-     */
-    function count_occourrences(haystack_string: string, needle_string: string, check_escape: boolean): int;
+    class class_pair<type_first, type_second> implements interface_cloneable<class_pair<type_first, type_second>>, interface_collatable<class_pair<type_first, type_second>>, interface_hashable, interface_showable {
+        /**
+         * @author fenris
+         */
+        protected first: type_first;
+        /**
+         * @author fenris
+         */
+        protected second: type_second;
+        /**
+         * @author fenris
+         */
+        constructor(first: type_first, second: type_second);
+        /**
+         * @desc [accessor] [getter]
+         * @author fenris
+         */
+        first_get(): type_first;
+        /**
+         * @desc [accessor] [getter]
+         * @author fenris
+         */
+        second_get(): type_second;
+        /**
+         * @desc [mutator] [setter]
+         * @author fenris
+         */
+        first_set(first: type_first): void;
+        /**
+         * @desc [mutator] [setter]
+         * @author fenris
+         */
+        second_set(second: type_second): void;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        swap(): class_pair<type_second, type_first>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        transform<type_first_, type_second_>(transform_first: (first: type_first) => type_first_, transform_second: (second: type_second) => type_second_): class_pair<type_first_, type_second_>;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _clone(): class_pair<type_first, type_second>;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _hash(): string;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _collate(pair: class_pair<type_first, type_second>): boolean;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _show(): string;
+    }
 }
-/**
- * @desc adapters for old syntax
- */
-declare var string_generate: typeof lib_string.generate;
-declare var string_split: typeof lib_string.split;
-declare var string_repeat: typeof lib_string.repeat;
-declare var string_pad: typeof lib_string.pad;
-declare var string_contains: typeof lib_string.contains;
-declare var string_startsWith: typeof lib_string.startsWith;
-declare var string_endsWith: typeof lib_string.endsWith;
-declare var string_count_occourrences: typeof lib_string.count_occourrences;
-declare module lib_string {
+declare module lib_structures {
     /**
-     * an implementation of c sprintf
-     * @param {string} string format string
-     * @param {array} args arguments which should be filled into
-     * @returns {string}
+     * @author fenris
      */
-    var sprintf: (input: string, args?: any[], original?: any) => string;
-    /**
-     * an implementation of c printf
-     * @param {string} string format string
-     * @param {array} args arguments which should be filled into
-     * @returns {string}
-     */
-    function printf(format: any, args: any): void;
+    class class_set<type_element> implements interface_collatable<class_set<type_element>>, interface_showable {
+        /**
+         * @author fenris
+         */
+        protected elements: Array<type_element>;
+        /**
+         * @author fenris
+         */
+        protected equality: (element1: type_element, element2: type_element) => boolean;
+        /**
+         * @author fenris
+         */
+        constructor(elements_?: Array<type_element>, equality?: (element1: type_element, element2: type_element) => boolean);
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        size(): int;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        has(element: type_element): boolean;
+        /**
+         * @desc [mutator]
+         * @author fenris
+         */
+        add(element: type_element): void;
+        /**
+         * @desc [mutator]
+         * @author fenris
+         */
+        pop(): class_maybe<type_element>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        forEach(function_: (element: type_element) => void): void;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        map<type_element_>(transformator: (element: type_element) => type_element_): class_set<type_element_>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        filter(predicate: (element: type_element) => boolean): class_set<type_element>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        dump(): Array<type_element>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        subset(set: class_set<type_element>): boolean;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        superset(set: class_set<type_element>): boolean;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        equals(set: class_set<type_element>): boolean;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        toString(): string;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        empty(): boolean;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        union(set: class_set<type_element>): class_set<type_element>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        intersection(set: class_set<type_element>): class_set<type_element>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        difference(set: class_set<type_element>): class_set<type_element>;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _collate(set: class_set<type_element>): boolean;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _show(): string;
+    }
 }
-declare var sprintf: (input: string, args?: any[], original?: any) => string;
-declare var printf: typeof lib_string.printf;
-declare var global_config: any;
-/**
- * @author neuc
- */
-declare module strftime {
-    function set_days(day_names: Array<string>): void;
-    function set_months(month_names: Array<string>): void;
-    function set_currentDate(date: Date): void;
-    function parse(format: string, date?: Date): string;
-}
-declare function locale_date(date?: Date, ignore_error?: boolean): string;
-declare var eml_log: any;
-declare var track_exports: any;
-declare var make_logger: (prefix: any, current_loglevel: any) => (obj: any, lvl: any) => void;
-/// <reference path="../../base/build/logic-decl.d.ts" />
-/// <reference path="../../string/build/logic-decl.d.ts" />
-declare module lib_object {
+declare module lib_structures {
     /**
      * @author fenris
      */
-    function fetch<type_value>(object: Object, fieldname: string, fallback?: type_value, escalation?: int): type_value;
+    abstract class class_map_abstract<type_key, type_value> {
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        abstract has(key: type_key): boolean;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        abstract get(key: type_key, strict?: boolean, fallback?: type_value): type_value;
+        /**
+         * @desc [mutator]
+         * @author fenris
+         */
+        abstract set(key: type_key, value: type_value): void;
+        /**
+         * @desc [mutator]
+         * @author fenris
+         */
+        abstract clear(): void;
+        /**
+         * @desc [mutator]
+         * @author fenris
+         */
+        abstract delete(key: type_key): void;
+        /**
+         * @desc [mutator] [syntactic sugar]
+         * @author fenris
+         */
+        del(key: type_key): void;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        forEach(function_: (value?: type_value, key?: type_key) => void): void;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        map<type_value_>(transformator: (value?: type_value, key?: type_key) => type_value_): class_map_abstract<type_key, type_value>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        filter(predicate: (value?: type_value, key?: type_key) => boolean): class_map_abstract<type_key, type_value>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        pairs(): class_set<class_pair<type_key, type_value>>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        keys(): class_set<type_key>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        values(): class_set<type_value>;
+    }
     /**
      * @author fenris
      */
-    function map<type_from, type_to>(object_from: {
-        [key: string]: type_from;
-    }, transformator: (value_from: type_from, key?: string) => type_to): {
-        [key: string]: type_to;
-    };
-    /**
-     * @author fenris
-     */
-    function filter<type_value>(object_from: {
-        [key: string]: type_value;
-    }, predicate: (value_from: type_value, key?: string) => boolean): {
-        [key: string]: type_value;
-    };
-    /**
-     * @author fenris
-     */
-    function from_array<type_value>(array: Array<{
-        key: string;
-        value: type_value;
-    }>): {
-        [key: string]: type_value;
-    };
-    /**
-     * @author fenris
-     */
-    function to_array<type_value>(object: {
-        [key: string]: type_value;
-    }): Array<{
-        key: string;
-        value: type_value;
-    }>;
-    /**
-     * @author fenris
-     */
-    function values<type_value>(object: {
-        [key: string]: type_value;
-    }): Array<type_value>;
-    /**
-     * @author fenris
-     */
-    function path_read<type_value>(object: Object, path: string, fallback?: type_value, escalation?: int): type_value;
-    /**
-     * @author fenris
-     */
-    function path_write<type_value>(object: Object, path: string, value: type_value, construct?: boolean): void;
-    /**
-     * @author fenris
-     */
-    function matches(object: Object, pattern: Object): boolean;
-    /**
-     * @author fenris
-     */
-    function flatten(value: any): Object;
-    /**
-     * @author frac
-     */
-    function clash(x: Object, y: Object): Object;
-}
-/**
- * @desc adapters for old syntax
- * @author fenris
- */
-declare var object_fetch: typeof lib_object.fetch;
-declare var object_map: typeof lib_object.map;
-declare var object_a2o: typeof lib_object.from_array;
-declare var object_o2a: typeof lib_object.to_array;
-declare var object_matches: typeof lib_object.matches;
-declare var object_clash: typeof lib_object.clash;
-declare var Mapper: any;
-/**
- * @param {Object} map
- * @return {string}
- * @author frac
- */
-declare var object_map2string: (map: Object) => string;
-/**
- * @param {Array} array
- * @return {string}
- * @author frac
- */
-declare var object_array2string: (array: any[]) => string;
-/**
- * @desc follows a path in an object-tree
- * @param {Object} object the object in which the path lies
- * @param {string} path the steps
- * @param {boolean} [create] whether to create not yet existing branches
- * @return {Object} {'successful': successful, 'position': position} where the branch or leaf at the end of the path
- * @author frac
- */
-declare var object_path_walk: (object: Object, path: string, create?: boolean, null_on_missing?: boolean) => any;
-/**
- * @desc reads a branch/leaf from an object-tree
- * @author frac
- */
-declare var object_path_read: (object: Object, path: string, null_on_missing?: boolean) => any;
-/**
- * @desc writes a branch/leaf to an object-tree
- * @author frac
- */
-declare var object_path_write: (object: Object, path: string, value: any) => void;
-declare var object_object_path_write_ex: (obj: Object, path: string, val: any) => void;
-/**
- * @desc filters branches from an object
- * @param {Object} object the object to read from
- * @param {Array} paths a list of string-lists, that are the paths to be propagated
- * @return {Object} the object with only the selected branches
- * @author frac
- */
-declare var object_path_filter: (object: any, paths: any) => {};
-/**
- * @desc dunno… returns a list of object-paths?
- * @param {Object} object
- * @param {string} p
- * @todo can probably be merged with getLeafg
- */
-declare var object_path_list: (object: Object, path?: string, visited?: any[]) => any[];
-/**
- * theroreticaly loop prof walk through all elements and subelements of an object
- * and call a callback for each entry
- * @param {object} obj object to iterate through
- * @param {function} callback
- */
-declare var object_iterate: (obj: any, callback: any, leafs_only: boolean, path: any, visited?: any[]) => void;
-/**
- * @desc get the leaf-nodes of an object
- * @param {object} object
- * @return {Array<string>} a list containing all leaf-nodes
- * @author frac
- */
-declare var getLeafs: (object: any) => any;
-/**
- *
- * @desc merges two arrays by probing
- * @param {Array} core
- * @param {Array} mantle
- * @param {function} match
- */
-declare var merge_array: (core: any, mantle: any, match?: (x: any, y: any) => boolean) => any;
-/**
- * @desc merges two objects recursivly
- * @param {Object} object1 core
- * @param {Object} object2 mantle
- * @param {Array} [ignore_keys]
- * @param [do_not_overwrite_existing_values]
- * @returns {Object} a clone of object1 will be returned
- */
-declare var object_merge_objects: (object1?: any, object2?: any, ignore_keys?: string[], do_not_overwrite_existing_values?: boolean, ignore_null?: boolean, path?: any[]) => any;
-declare var flatten_object: (obj: any, recipie: any, drop_key?: (k: any) => boolean) => {};
-/**
- * use the complete path of an objects entry as key to make an one dimensional object
- * @param {object} object the object which should be moade flat
- * @param {string} [path] for the recursive call the current path
- */
-declare var object_make_flat: (object: any, path?: any, filter?: string[], split_char?: string, objects?: any[]) => any;
-/**
- * splits a flat oject into an array of objects if there are paths containing numbers, which indicates
- * that there might be an array
- * used for normalisation of imports
- * @param entry
- * @param number_replace_string
- * @param {function} [match_function] how to test key if it causes a split
- * @returns {Array}
- */
-declare var object_split_flat_object: (entry: any, number_replace_string: any, fab_function: any, match_function: any) => any[];
-declare var object_make_flat_async: (data: any, callback: any, on_progress: any) => void;
-/**
- */
-declare type key_value_list = {
-    [key: string]: any;
-};
-declare var object_flatten: (object: any, paths: string[], prefix?: string) => {
-    [key: string]: any;
-};
-/**
- * parse
- * @param {String} value
- * @returns {Object}
- */
-declare var object_parse: (value: string) => Object;
-/**
- * stringify
- *
- * @description stringify object as JSON
- */
-declare var object_stringify: (object: Object, readable?: boolean) => string;
-declare var pivot_demo_data0: any;
-declare module lib_object {
-    /**
-     * @author frac
-     */
-    type type_relationparameters<type_value> = {
-        symbol?: string;
-        name?: string;
-        predicate?: (value: type_value, reference: type_value) => boolean;
-    };
-    /**
-     * @author frac
-     */
-    class class_relation<type_value> {
+    class class_map_simple<type_value> extends class_map_abstract<string, type_value> implements interface_cloneable<class_map_simple<type_value>>, interface_showable {
         /**
-         * @author frac
+         * @author fenris
          */
-        protected id: string;
-        /**
-         * @author frac
-         */
-        protected symbol: string;
-        /**
-         * @author frac
-         */
-        protected name: string;
-        /**
-         * @author frac
-         */
-        protected predicate: (value: type_value, reference: type_value) => boolean;
-        /**
-         * @author frac
-         */
-        check(value: type_value, reference: type_value): boolean;
-        /**
-         * @author frac
-         */
-        constructor(id: string, parameters: type_relationparameters<type_value>);
-        /**
-         * @author frac
-         */
-        id_get(): string;
-        /**
-         * @author frac
-         */
-        symbol_get(): string;
-        /**
-         * @author frac
-         */
-        name_get(): string;
-        /**
-         * @author frac
-         */
-        protected static pool<type_value>(): {
-            [id: string]: type_relationparameters<type_value>;
+        protected object: {
+            [key: string]: type_value;
         };
         /**
-         * @author frac
+         * @author fenris
          */
-        static get<type_value>(id: string): class_relation<type_value>;
+        constructor();
         /**
-         * @author frac
+         * @desc [accessor]
+         * @author fenris
          */
-        static available(): Array<string>;
+        static from_object<type_value>(object: {
+            [key: string]: type_value;
+        }): class_map_simple<type_value>;
+        /**
+         * @override
+         * @author fenris
+         */
+        has(key: string): boolean;
+        /**
+         * @override
+         * @author fenris
+         */
+        get(key: string, strict?: boolean, fallback?: type_value): type_value;
+        /**
+         * @override
+         * @author fenris
+         */
+        set(key: string, value: type_value): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        clear(): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        delete(key: string): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        forEach(function_: (value?: type_value, key?: string) => void): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        map<type_value_>(transformator: (value?: type_value, key?: string) => type_value_): class_map_simple<type_value_>;
+        /**
+         * @override
+         * @author fenris
+         */
+        filter(predicate: (value?: type_value, key?: string) => boolean): class_map_simple<type_value>;
+        /**
+         * @override
+         * @author fenris
+         */
+        pairs(): class_set<class_pair<string, type_value>>;
+        /**
+         * @override
+         * @author fenris
+         */
+        keys(): class_set<string>;
+        /**
+         * @override
+         * @author fenris
+         */
+        values(): class_set<type_value>;
+        /**
+         * @desc [accessor]
+         * @author fenris
+         * @todo implement
+         */
+        /**
+         * @desc [accessor]
+         * @author fenris
+         */
+        toString(): string;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _clone(): class_map_simple<type_value>;
+        /**
+         * @desc [accessor] [implementation]
+         * @author fenris
+         */
+        _show(): string;
     }
     /**
-     * @author frac
+     * @author fenris
      */
-    class class_filtrationitem<type_value> {
+    class class_map_equality<type_key, type_value> extends class_map_abstract<type_key, type_value> {
         /**
-         * @author frac
+         * @author fenris
          */
-        protected extract: (dataset: Object) => type_value;
+        protected pairs_: Array<class_pair<type_key, type_value>>;
         /**
-         * @author frac
+         * @author fenris
          */
-        protected relation: class_relation<type_value>;
+        protected collate: (key1: type_key, key2: type_key) => boolean;
         /**
-         * @author frac
+         * @author fenris
          */
-        protected reference: type_value;
+        constructor(collate?: (key1: type_key, key2: type_key) => boolean);
         /**
-         * @author frac
+         * @override
+         * @author fenris
          */
-        constructor(parameters: {
-            extract?: (dataset: Object) => type_value;
-            relation?: class_relation<type_value>;
-            reference?: type_value;
-        });
+        has(key: type_key): boolean;
         /**
-         * @author frac
+         * @override
+         * @author fenris
          */
-        check(dataset: Object): boolean;
+        get(key: type_key, strict?: boolean, fallback?: type_value): type_value;
+        /**
+         * @override
+         * @author fenris
+         */
+        set(key: type_key, value: type_value): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        clear(): void;
+        /**
+         * @override
+         * @author fenris
+         */
+        delete(key: type_key): void;
     }
     /**
-     * @author frac
+     * @author fenris
      */
-    class class_filtration {
-        /**
-         * @author frac
-         */
-        protected clauses: Array<Array<class_filtrationitem<any>>>;
-        /**
-         * @author frac
-         */
-        constructor(clauses: Array<Array<class_filtrationitem<any>>>);
-        /**
-         * @author frac
-         */
-        check(dataset: Object): boolean;
-        /**
-         * @author frac
-         */
-        use(datasets: Array<Object>): Array<Object>;
-        /**
-         * @author frac
-         */
-        static test(): void;
+    class class_map<type_key, type_value> extends class_map_equality<type_key, type_value> {
     }
 }
-/// <reference path="../../object/build/logic-decl.d.ts" />
-declare module lib_path {
+declare module lib_structures {
     /**
      * @author fenris
      */
-    abstract class class_step {
+    abstract class class_store<type_element> {
         /**
+         * @desc [accessor] the number of elements
          * @author fenris
          */
-        abstract invert(): class_step;
+        abstract size(): int;
         /**
+         * @desc [accessor] reads the takeable element
          * @author fenris
          */
-        abstract toString(): string;
+        abstract scan(): type_element;
+        /**
+         * @desc [mutator] inserts an element
+         * @author fenris
+         */
+        abstract give(element: type_element): void;
+        /**
+         * @desc [mutator] removes an element and returns it
+         * @author fenris
+         */
+        abstract take(): type_element;
     }
-    /**
-     * @author fenris
-     */
-    class class_step_stay extends class_step {
-        /**
-         * @author fenris
-         */
-        invert(): class_step;
-        /**
-         * @author fenris
-         */
-        toString(): string;
-    }
-    /**
-     * @author fenris
-     */
-    class class_step_back extends class_step {
-        /**
-         * @author fenris
-         */
-        invert(): class_step;
-        /**
-         * @author fenris
-         */
-        toString(): string;
-    }
-    /**
-     * @author fenris
-     */
-    class class_step_regular extends class_step {
-        /**
-         * @author fenris
-         */
-        protected name: string;
-        /**
-         * @author fenris
-         */
-        constructor(name: string);
-        /**
-         * @author fenris
-         */
-        invert(): class_step;
-        /**
-         * @author fenris
-         */
-        toString(): string;
-    }
-    /**
-     * @author fenris
-     */
-    function step_read(s: string): class_step;
 }
-declare module lib_path {
+declare module lib_structures {
     /**
      * @author fenris
      */
-    class class_chain {
+    abstract class class_stack<type_element> extends class_store<type_element> {
         /**
          * @author fenris
          */
-        static splitter(system?: string): string;
+        protected elements: Array<type_element>;
         /**
          * @author fenris
          */
-        steps: Array<class_step>;
+        constructor();
         /**
+         * @override
          * @author fenris
          */
-        constructor(steps?: Array<class_step>);
+        size(): int;
         /**
-         * @desc removes superfluent steps from the chain, e.g. infix ".."
+         * @override
          * @author fenris
          */
-        normalize(): class_chain;
+        scan(): type_element;
         /**
+         * @override
          * @author fenris
          */
-        invert(): class_chain;
+        give(element: type_element): void;
         /**
+         * @override
          * @author fenris
          */
-        protected add(step: class_step): class_chain;
-        /**
-         * @author fenris
-         */
-        extend(chain: class_chain): class_chain;
-        /**
-         * @author fenris
-         */
-        as_string(system?: string): string;
-        /**
-         * @author fenris
-         */
-        toString(): string;
+        take(): type_element;
     }
-    /**
-     * @author fenris
-     */
-    function chain_read(str: string, system?: string): class_chain;
 }
-declare var process: any;
-declare module lib_path {
+declare module lib_structures {
     /**
      * @author fenris
      */
-    class class_location {
+    abstract class class_queue<type_element> extends class_store<type_element> {
         /**
          * @author fenris
          */
-        static anchorpattern(system?: string): RegExp;
+        protected elements: Array<type_element>;
         /**
          * @author fenris
          */
-        anchor: string;
+        constructor();
         /**
+         * @override
          * @author fenris
          */
-        chain: class_chain;
+        size(): int;
         /**
+         * @override
          * @author fenris
          */
-        constructor(anchor: string, chain: class_chain);
+        scan(): type_element;
         /**
+         * @override
          * @author fenris
          */
-        normalize(): class_location;
+        give(element: type_element): void;
         /**
+         * @override
          * @author fenris
          */
-        extend(chain: class_chain): class_location;
-        /**
-         * @author fenris
-         */
-        go_thither(): void;
-        /**
-         * @author fenris
-         */
-        expedition(core: (finish: () => void) => void): void;
-        /**
-         * @author fenris
-         */
-        as_string(system?: string): string;
-        /**
-         * @author fenris
-         */
-        toString(): string;
-        /**
-         * @author fenris
-         */
-        static current(): class_location;
-        /**
-         * @author fenris
-         */
-        static tempfolder(system?: string): class_location;
+        take(): type_element;
     }
-    /**
-     * @author fenris
-     */
-    function location_read(str: string, system?: string): class_location;
-}
-declare module lib_path {
-    /**
-     * @author fenris
-     */
-    class class_filepointer {
-        /**
-         * @author fenris
-         */
-        location: class_location;
-        /**
-         * @author fenris
-         */
-        filename: string;
-        /**
-         * @author fenris
-         */
-        constructor(location: class_location, filename: string);
-        /**
-         * @author fenris
-         */
-        normalize(): class_filepointer;
-        /**
-         * @author fenris
-         */
-        foo(filepointer: class_filepointer): class_filepointer;
-        /**
-         * @author fenris
-         */
-        as_string(system?: string): string;
-        /**
-         * @author fenris
-         */
-        toString(): string;
-    }
-    /**
-     * @author fenris
-     */
-    function filepointer_read(str: string, system?: string): class_filepointer;
 }
 /// <reference path="../../base/build/logic-decl.d.ts" />
 /// <reference path="../../call/build/logic-decl.d.ts" />
@@ -1464,3 +1298,4 @@ declare module lib_args {
         }): string;
     }
 }
+

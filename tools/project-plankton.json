@@ -1,11 +1,8 @@
 {
 	"name": "schwamm-libs",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"dependencies": [
 		"../../plankton/base/project.json",
-		"../../plankton/call/project.json",
-		"../../plankton/object/project.json",
-		"../../plankton/path/project.json",
 		"../../plankton/file/project.json",
 		"../../plankton/args/project.json"
 	],
@@ -24,9 +21,6 @@
 				"parameters": {
 					"includes": [
 						"../../plankton/base/build/schwamm.json",
-						"../../plankton/call/build/schwamm.json",
-						"../../plankton/object/build/schwamm.json",
-						"../../plankton/path/build/schwamm.json",
 						"../../plankton/file/build/schwamm.json",
 						"../../plankton/args/build/schwamm.json"
 					],

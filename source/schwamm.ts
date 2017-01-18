@@ -5,14 +5,6 @@ declare var process;
 /**
  * @author fenris
  */
-type type_schwamm = {
-	paths : {[domain : string] : Array<string>};
-}
-
-
-/**
- * @author fenris
- */
 var globalvars = {
 	"meta": {
 		"version": "0.2.0",
@@ -28,69 +20,118 @@ var globalvars = {
 /**
  * @author fenris
  */
-function suck(
+function absolutify(
+	path : string
+) : string
+{
+	return ((path[0] == "/") ? path : (process.cwd() + "/" + path));
+}
+
+
+/**
+ * @author fenris
+ */
+type type_schwamm = {[domain : string] : Array<string>};
+
+
+/**
+ * @author fenris
+ */
+function schwamm_create(
+) : type_schwamm {
+	return {};
+}
+
+
+/**
+ * @author fenris
+ */
+function schwamm_has(
+	schwamm : type_schwamm,
+	domain : string,
+	path : string
+) : boolean
+{
+	if (! (domain in schwamm)) {
+		return false;
+	}
+	else {
+		return schwamm[domain].some(path_ => (path == path_));
+	}
+}
+
+
+/**
+ * @author fenris
+ */
+function schwamm_add(
+	schwamm : type_schwamm,
+	domain : string,
+	path : string
+) : void
+{
+	let path_ : string = absolutify(path);
+	if (! (domain in schwamm)) {
+		schwamm[domain] = new Array<string>();
+	}
+	if (! schwamm_has(schwamm, domain, path_)) {
+		schwamm[domain].push(path_);
+	}
+}
+
+
+/**
+ * @author fenris
+ */
+function schwamm_suck(
+	schwamm : type_schwamm,
 	includes : Array<string>,
 	inputs : {[domain : string] : Array<string>}
-) : Promise<type_schwamm, Error>
+) : Promise<void, Error>
 {
-	let add : (schwamm : type_schwamm, domain : string, path : string)=>void = (schwamm, domain, path) => {
-		if (! (domain in schwamm.paths)) {
-			schwamm.paths[domain] = [];
-		}
-		if (! (path in schwamm.paths[domain])) {
-			schwamm.paths[domain].push(path);
-		}
-	};
 	return Promise.resolve<void, Error>(undefined)
-		// initialize empty schwamm
-		.then<type_schwamm, Error>(
+		// includes
+		.then<void, Error>(
 			_ => new Promise<type_schwamm, Error>(
 				(resolve, reject) => {
-					let schwamm : type_schwamm = {"paths": {}};
-					resolve(schwamm);
-				}
-			)
-		)
-		// includes
-		.then<type_schwamm, Error>(
-			schwamm => new Promise<type_schwamm, Error>(
-				(resolve, reject) => {
-					lib_call.executor_condense(includes.map(include => lib_file.read_json(include)))(
-						contents => {
-							contents.forEach(
-								content => {
-									Object.keys(content).forEach(
-										domain => {
-											content[domain].forEach(
-												path => {
-													add(schwamm, domain, path);
-												}
-											);
-										}
-									);
-								}
-							);
-							resolve(schwamm);
-						},
-						reject
-					);
+					Promise.all(includes.map(include => new Promise<any, Error>(lib_file.read_json(include))))
+						.then(
+							contents => {
+								contents.forEach(
+									content => {
+										Object.keys(content).forEach(
+											domain => {
+												content[domain].forEach(
+													path => {
+														schwamm_add(schwamm, domain, path);
+													}
+												);
+											}
+										);
+									}
+								);
+								resolve(undefined);
+							},
+							reject
+						)
+					;
 				}
 			)
 		)
 		// inputs
-		.then<type_schwamm, Error>(
-			schwamm => new Promise<type_schwamm, Error>(
+		.then<void, Error>(
+			_ => new Promise<type_schwamm, Error>(
 				(resolve, reject) => {
 					Object.keys(inputs).forEach(
 						domain => {
 							inputs[domain].forEach(
 								path => {
-									add(schwamm, domain, path);
+									schwamm_add(schwamm, domain, path);
 								}
 							);
 						}
 					);
-					resolve(schwamm);
+					resolve(undefined);
 				}
 			)
 		)
@@ -101,7 +142,7 @@ function suck(
 /**
  * @author fenris
  */
-function squeeze(
+function schwamm_squeeze(
 	schwamm : type_schwamm,
 	output : {kind : string; parameters ?: Object;}
 ) : Promise<void, Error>
@@ -111,18 +152,18 @@ function squeeze(
 			(resolve, reject) => {
 				switch (output.kind) {
 					case "native": {
-						let message : string = JSON.stringify(schwamm.paths, undefined, "\t");
+						let message : string = JSON.stringify(schwamm, undefined, "\t");
 						console.info(message);
 						resolve(undefined);
 						break;
 					}
 					case "list": {
 						let domain : string = output.parameters["domain"];
-						if (! (domain in schwamm.paths)) {
+						if (! (domain in schwamm)) {
 							reject(new Error(`schwamm has no entries for domain '${domain}'`));
 						}
 						else {
-							let message = schwamm.paths[domain].join("\n");
+							let message = schwamm[domain].join("\n");
 							console.info(message);
 							resolve(undefined);
 						}
@@ -130,18 +171,20 @@ function squeeze(
 					}
 					case "dump": {
 						let domain : string = output.parameters["domain"];
-						if (! (domain in schwamm.paths)) {
+						if (! (domain in schwamm)) {
 							reject(new Error(`schwamm has no entries for domain '${domain}'`));
 						}
 						else {
-							lib_call.executor_condense(schwamm.paths[domain].map(path => lib_file.read(path)))(
-								contents => {
-									let message : string = contents.reduce((x, y) => (x + y), "");
-									console.info(message);
-									resolve(undefined);
-								},
-								reject
-							);
+							Promise.all(schwamm[domain].map(path => new Promise<string, Error>(lib_file.read(path))))
+								.then(
+									contents => {
+										let message : string = contents.reduce((x, y) => (x + y), "");
+										console.info(message);
+										resolve(undefined);
+									},
+									reject
+								)
+							;
 						}
 						break;
 					}
@@ -174,7 +217,7 @@ function main(
 					"kind": "volatile",
 					"parameters": {
 						"indicators_long": ["include"],
-						"indicators_short": ["c"],
+						"indicators_short": ["r"],
 					},
 					"info": "adds a schwamm-file, which is to be included",
 				}
@@ -263,12 +306,12 @@ function main(
 				let regexp : RegExp = new RegExp("([^:]*):([^:]*)");
 				let matching : any = regexp.exec(input_raw);
 				if (matching == null) {
-					console.error("couldn't read input definition '" + input_raw + "'");
+					console.error(`couldn't read input definition '${input_raw}'`);
 					// return null;
 				}
 				else {
-					let domain : string = matching[1];
-					let path : string = matching[2];
+					let path : string = matching[1];
+					let domain : string = matching[2];
 					if (! (domain in inputs)) {
 						inputs[domain] = [];
 					}
@@ -308,9 +351,14 @@ function main(
 			return Promise.reject<void, Error>(new Error("invalid output"));
 		}
 		else {
+			let schwamm : type_schwamm = schwamm_create();
 			return Promise.resolve<void, Error>(undefined)
-				.then<type_schwamm, Error>(_ => suck(includes, inputs))
-				.then<void, Error>(schwamm => squeeze(schwamm, output))
+				.then<void, Error>(
+					_ => schwamm_suck(schwamm, includes, inputs)
+				)
+				.then<void, Error>(
+					_ => schwamm_squeeze(schwamm, output)
+				)
 			;
 		}
 	}
