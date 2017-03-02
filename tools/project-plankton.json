@@ -3,31 +3,26 @@
 	"version": "0.1.0",
 	"dependencies": [
 		"../../plankton/base/project.json",
+		"../../plankton/object/project.json",
 		"../../plankton/file/project.json",
 		"../../plankton/args/project.json"
 	],
 	"roottask": {
-		"type": "schwamm-apply",
+		"type": "schwamm",
 		"parameters": {
-			"path": "../temp/schwamm.json",
-			"outputs": {
-				"logic-impl": "../libs/plankton-impl.js",
-				"logic-decl": "../libs/plankton-decl.d.ts"
-			}
-		},
-		"sub": [
-			{
-				"type": "schwamm-create",
-				"parameters": {
-					"includes": [
-						"../../plankton/base/build/schwamm.json",
-						"../../plankton/file/build/schwamm.json",
-						"../../plankton/args/build/schwamm.json"
-					],
-					"output": "../temp/schwamm.json"
+			"includes": [
+				"../../plankton/base/build/schwamm.json",
+				"../../plankton/object/build/schwamm.json",
+				"../../plankton/file/build/schwamm.json",
+				"../../plankton/args/build/schwamm.json"
+			],
+			"output": {
+				"dump": {
+					"logic-impl": "../libs/plankton-impl.js",
+					"logic-decl": "../libs/plankton-decl.d.ts"
 				}
 			}
-		]
+		}
 	}
 }
 

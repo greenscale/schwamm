@@ -87,14 +87,14 @@ function schwamm_suck(
 	schwamm : type_schwamm,
 	includes : Array<string>,
 	inputs : {[domain : string] : Array<string>}
-) : Promise<void, Error>
+) : Promise<void>
 {
-	return Promise.resolve<void, Error>(undefined)
+	return Promise.resolve<void>(undefined)
 		// includes
-		.then<void, Error>(
-			_ => new Promise<type_schwamm, Error>(
+		.then<void>(
+			_ => new Promise<void>(
 				(resolve, reject) => {
-					Promise.all(includes.map(include => new Promise<any, Error>(lib_file.read_json(include))))
+					Promise.all<void>(includes.map(include => new Promise<any>(lib_file.read_json(include))))
 						.then(
 							contents => {
 								contents.forEach(
@@ -119,8 +119,8 @@ function schwamm_suck(
 			)
 		)
 		// inputs
-		.then<void, Error>(
-			_ => new Promise<type_schwamm, Error>(
+		.then<void>(
+			_ => new Promise<void>(
 				(resolve, reject) => {
 					Object.keys(inputs).forEach(
 						domain => {
@@ -144,11 +144,11 @@ function schwamm_suck(
  */
 function schwamm_squeeze(
 	schwamm : type_schwamm,
-	output : {kind : string; parameters ?: Object;}
-) : Promise<void, Error>
+	output : {kind : string; parameters ?: /*Object*/Array<string>;}
+) : Promise<void>
 {
 	return (
-		new Promise<void, Error>(
+		new Promise<void>(
 			(resolve, reject) => {
 				switch (output.kind) {
 					case "native": {
@@ -158,7 +158,7 @@ function schwamm_squeeze(
 						break;
 					}
 					case "list": {
-						let domain : string = output.parameters["domain"];
+						let domain : string = output.parameters[/*"domain"*/0];
 						if (! (domain in schwamm)) {
 							reject(new Error(`schwamm has no entries for domain '${domain}'`));
 						}
@@ -170,18 +170,65 @@ function schwamm_squeeze(
 						break;
 					}
 					case "dump": {
-						let domain : string = output.parameters["domain"];
+						let domain : string = output.parameters[/*"domain"*/0];
 						if (! (domain in schwamm)) {
 							reject(new Error(`schwamm has no entries for domain '${domain}'`));
 						}
 						else {
-							Promise.all(schwamm[domain].map(path => new Promise<string, Error>(lib_file.read(path))))
+							Promise.all(schwamm[domain].map(path => new Promise<string>(lib_file.read(path))))
 								.then(
 									contents => {
 										let message : string = contents.reduce((x, y) => (x + y), "");
 										console.info(message);
 										resolve(undefined);
 									},
+									reject
+								)
+							;
+						}
+						break;
+					}
+					case "locmerge": {
+						let domain : string = output.parameters[/*"domain"*/0];
+						if (! (domain in schwamm)) {
+							reject(new Error(`schwamm has no entries for domain '${domain}'`));
+						}
+						else {
+							Promise.all(schwamm[domain].map(path => new Promise<string>(lib_file.read_json(path))))
+								.then<{[identifier : string] : Object}>(
+									datas => new Promise(
+										(resolve_, reject_) => {
+											let mapping : {[identifier : string] : Object} = {};
+											datas.forEach(
+												data => {
+													let identifier : string = data["meta"]["identifier"];
+													if (! (identifier in mapping)) {
+														mapping[identifier] = {};
+													}
+													lib_object.patch(mapping[identifier], data["tree"]);
+												}
+											);
+											resolve_(mapping);
+										}
+									)
+								)
+								.then<void>(
+									mapping => new Promise<void>(
+										(resolve_, reject_) => {
+											let identifier : string = output.parameters[/*"identifier"*/1];
+											let object : Object = {
+												"meta": {
+													"identifier": identifier,
+												},
+												"tree": mapping[identifier],
+											};
+											console.info(JSON.stringify(object, undefined, "\t"));
+											resolve_(undefined);
+										}
+									)
+								)
+								.then<void>(
+									resolve,
 									reject
 								)
 							;
@@ -204,7 +251,7 @@ function schwamm_squeeze(
  */
 function main(
 	args : Array<string>
-) : Promise<void, Error>
+) : Promise<void>
 {
 	let arghandler : lib_args.class_handler = new lib_args.class_handler(
 		[
@@ -247,7 +294,7 @@ function main(
 						"indicators_long": ["output"],
 						"indicators_short": ["o"],
 					},
-					"info": "sets the output-action; valid values are 'native', 'list:<domain>', 'dump:<domain>'",
+					"info": "sets the output-action; valid values are 'native', 'list:<domain>', 'dump:<domain>', 'locmerge:<domain>:<identifier>'",
 				}
 			),
 			new lib_args.class_argument(
@@ -291,12 +338,12 @@ function main(
 			}
 		);
 		console.info(message);
-		return Promise.resolve<void, Error>(undefined);
+		return Promise.resolve<void>(undefined);
 	}
 	else if (argdata["version"]) {
 		let message : string = globalvars["meta"]["version"];
 		console.info(message);
-		return Promise.resolve<void, Error>(undefined);
+		return Promise.resolve<void>(undefined);
 	}
 	else {
 		let includes : Array<string> = argdata["includes"];
@@ -319,9 +366,15 @@ function main(
 				}
 			}
 		);
-		let output : {kind : string; parameters ?: Object} =
+		let output : {kind : string; parameters ?: /*Object*/Array<string>} =
 			(
 				output_raw => {
+					let parts : Array<string> = output_raw.split(":");
+					return {
+						"kind": parts[0],
+						"parameters": parts.slice(1),
+					};
+					/*
 					let regexp : RegExp = new RegExp("([^:]*)(?::([^:]*))?");
 					let matching : any = regexp.exec(output_raw);
 					if (matching == null) {
@@ -344,19 +397,20 @@ function main(
 							};
 						}
 					}
+					 */
 				}
 			) (argdata["output"])
 		;
 		if (output == null) {
-			return Promise.reject<void, Error>(new Error("invalid output"));
+			return Promise.reject<void>(new Error("invalid output"));
 		}
 		else {
 			let schwamm : type_schwamm = schwamm_create();
-			return Promise.resolve<void, Error>(undefined)
-				.then<void, Error>(
+			return Promise.resolve<void>(undefined)
+				.then<void>(
 					_ => schwamm_suck(schwamm, includes, inputs)
 				)
-				.then<void, Error>(
+				.then<void>(
 					_ => schwamm_squeeze(schwamm, output)
 				)
 			;

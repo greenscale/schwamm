@@ -2,7 +2,7 @@ cmd_mkdir := mkdir -p
 cmd_rm := rm -r -f
 cmd_echo := echo -e
 cmd_cat := cat
-cmd_tsc := tsc
+cmd_tsc := tsc --target ES6
 
 all: build/schwamm.js
 	@ ${cmd_echo} "-- all done"
