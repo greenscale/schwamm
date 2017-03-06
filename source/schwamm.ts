@@ -188,6 +188,15 @@ function schwamm_squeeze(
 						}
 						break;
 					}
+					case "concatenate":
+					case "concat": {
+						let domain : string = output.parameters[/*"domain"*/0];
+						if (! (domain in schwamm)) {
+							reject(new Error(`schwamm has no entries for domain '${domain}'`));
+						}
+						else {
+						}
+					}
 					case "locmerge": {
 						let domain : string = output.parameters[/*"domain"*/0];
 						if (! (domain in schwamm)) {
@@ -285,10 +294,10 @@ function main(
 			),
 			new lib_args.class_argument(
 				{
-					"name": "output",
+					"name": "outputs",
 					"type": "string",
-					"default": "native",
-					"mode": "replace",
+					"default": [],
+					"mode": "accumulate",
 					"kind": "volatile",
 					"parameters": {
 						"indicators_long": ["output"],
@@ -366,55 +375,56 @@ function main(
 				}
 			}
 		);
-		let output : {kind : string; parameters ?: /*Object*/Array<string>} =
-			(
-				output_raw => {
-					let parts : Array<string> = output_raw.split(":");
-					return {
-						"kind": parts[0],
-						"parameters": parts.slice(1),
-					};
-					/*
-					let regexp : RegExp = new RegExp("([^:]*)(?::([^:]*))?");
-					let matching : any = regexp.exec(output_raw);
-					if (matching == null) {
-						console.error(`couldn't read output definition '${output_raw}'`);
+		let outputs : Array<{kind : string; parameters ?: /*Object*/Array<string>}> = [];
+		argdata["outputs"].forEach(
+			output_raw => {
+				/*
+				let regexp : RegExp = new RegExp("([^:]*)(?::([^:]*))?");
+				let matching : any = regexp.exec(output_raw);
+				if (matching == null) {
+					console.error(`couldn't read output definition '${output_raw}'`);
+					return null;
+				}
+				else {
+					let kind : string = matching[1];
+					let domain : string = matching[2];
+					if ((kind != "native") && (domain == undefined)) {
+						console.error("no domain for output specified");
 						return null;
 					}
 					else {
-						let kind : string = matching[1];
-						let domain : string = matching[2];
-						if ((kind != "native") && (domain == undefined)) {
-							console.error("no domain for output specified");
-							return null;
-						}
-						else {
-							return {
-								"kind": kind,
-								"parameters": {
-									"domain": domain,
-								},
-							};
-						}
+						return {
+							"kind": kind,
+							"parameters": {
+								"domain": domain,
+							},
+						};
 					}
-					 */
 				}
-			) (argdata["output"])
+				 */
+				let parts : Array<string> = output_raw.split(":");
+				let output = {
+					"kind": parts[0],
+					"parameters": parts.slice(1),
+				};
+				outputs.push(output);
+			}
+		);
+		let schwamm : type_schwamm = schwamm_create();
+		return Promise.resolve<void>(undefined)
+			.then<void>(
+				_ => schwamm_suck(schwamm, includes, inputs)
+			)
+			.then<void>(
+				_ => new Promise<void>(
+					(resolve, reject) => Promise.all(
+						outputs.map(
+							output => schwamm_squeeze(schwamm, output)
+						)
+					).then(_ => resolve(undefined), reject)
+				)
+			)
 		;
-		if (output == null) {
-			return Promise.reject<void>(new Error("invalid output"));
-		}
-		else {
-			let schwamm : type_schwamm = schwamm_create();
-			return Promise.resolve<void>(undefined)
-				.then<void>(
-					_ => schwamm_suck(schwamm, includes, inputs)
-				)
-				.then<void>(
-					_ => schwamm_squeeze(schwamm, output)
-				)
-			;
-		}
 	}
 }
 
